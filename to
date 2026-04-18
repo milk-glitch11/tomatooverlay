@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Tomato Overlay</title>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  .tomato {
+    position: absolute;
+    font-size: 42px;
+    animation: floatUp 6s linear forwards;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  @keyframes floatUp {
+    0% {
+      transform: translateY(100vh) scale(0.8);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-120px) scale(1.2);
+      opacity: 0;
+    }
+  }
+
+  .shake {
+    animation: shake 0.2s infinite;
+  }
+
+  @keyframes shake {
+    0% { transform: translate(0,0); }
+    25% { transform: translate(2px,-2px); }
+    50% { transform: translate(-2px,2px); }
+    75% { transform: translate(2px,2px); }
+    100% { transform: translate(0,0); }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Twitch chat library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tmi.js/1.8.5/tmi.min.js"></script>
+
+<script>
+const CHANNEL_NAME = "YOUR_CHANNEL_NAME_HERE";
+
+const client = new tmi.Client({
+  channels: [milkjugplug]
+});
+
+client.connect().catch(console.error);
+
+const userColors = {};
+const rageUsers = new Set();
+
+function getColor(user) {
+  if (!userColors[user]) {
+    userColors[user] = `hsl(${Math.random() * 360}, 80%, 60%)`;
+  }
+  return userColors[user];
+}
+
+function spawnTomato(user) {
+  const el = document.createElement("div");
+  el.className = "tomato";
+  el.textContent = "🍅";
+
+  const x = Math.random() * window.innerWidth;
+
+  el.style.left = x + "px";
+  el.style.top = window.innerHeight + "px";
+  el.style.color = getColor(user);
+
+  if (rageUsers.has(user)) {
+    el.classList.add("shake");
+  }
+
+  document.body.appendChild(el);
+
+  setTimeout(() => el.remove(), 6000);
+}
+
+function toggleRage(user) {
+  if (rageUsers.has(user)) {
+    rageUsers.delete(user);
+  } else {
+    rageUsers.add(user);
+  }
+}
+
+client.on("message", (channel, tags, message, self) => {
+  if (self) return;
+
+  const user = tags.username.toLowerCase();
+  const msg = message.toLowerCase().trim();
+
+  if (msg === "!hello") {
+    spawnTomato(user);
+  }
+
+  if (msg === "!rage") {
+    toggleRage(user);
+  }
+});
+</script>
+
+</body>
+</html>
